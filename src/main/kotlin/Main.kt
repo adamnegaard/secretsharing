@@ -19,9 +19,6 @@ private fun loadTestData(): Array<Point> {
 }
 
 fun main(args: Array<String>) {
-    val shares = loadTestData()
-
-    val point = Point(BigInteger.valueOf(10), BigInteger.valueOf(100))
-    val polynomial = Polynomial(arrayOf(BigInteger.ONE, BigInteger.TWO, BigInteger.TEN))
-
+    val task = Cryptography.constructShares("00b44a", 5, 2)
+    print(Cryptography.reconstructSecret(task.getField(), task.getShares()).toString(16))
 }

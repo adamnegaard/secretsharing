@@ -1,46 +1,86 @@
 import model.Point
+import model.TaskJson
+import java.security.SecureRandom;
 import java.math.BigInteger
-import java.security.SecureRandom
 
 object Cryptography {
 
-    fun generateShares(secret: BigInteger, threshold: Int, numShares: Int): Map<Int, BigInteger> {
-        val random = SecureRandom()
-        val prime = BigInteger.probablePrime(secret.bitLength() + 1, random)
-        val coeffecients = (1 until threshold).map { BigInteger(secret.bitLength(), random) }.toTypedArray()
+    fun constructShares(secret: String, amountOfShares: Int, threshold: Int): TaskJson {
 
-        val shares = mutableMapOf<Int, BigInteger>()
-        for (i in 1..numShares) {
-            val x = BigInteger.valueOf(i.toLong())
-            var y = secret
-            for (j in 0 until threshold - 1) {
-                y += coeffecients[j] * x.modPow(BigInteger.valueOf(j + 1L), prime)
+        val numSecret = Utils.bitStringToBigInteger(secret)
+
+        val random = SecureRandom()
+        val prime = BigInteger.probablePrime(numSecret.bitLength() + 1, random)
+
+        val coefficients = (1 until threshold).map { BigInteger(numSecret.bitLength(), random) }.toTypedArray()
+
+        val shares = mutableListOf<Point>()
+        for (x in 0 until amountOfShares) {
+
+            val bigX = BigInteger.valueOf(x.toLong())
+            var y = numSecret
+
+            for (i in 0 until threshold - 1) {
+                val bigI = BigInteger.valueOf(i.toLong())
+                y = y.plus(coefficients[i].times(bigX.modPow(bigI.plus(BigInteger.ONE), prime)))
             }
-            shares[i] = y.mod(prime)
+
+            shares.add(Point(x, y))
         }
 
-        return shares
+        return TaskJson.ofValues(prime, shares)
     }
 
-    fun reconstructSecret(shares: Array<Point>): BigInteger {
+    fun reconstructSecret(prime: BigInteger, shares: Array<Point>): BigInteger {
         var secret = BigInteger.ZERO
 
-        for ((shareIndexI, shareValueI) in shares) {
+        for ((i, share) in shares) {
+            var currSecret = share
+            val bigI = BigInteger.valueOf(i.toLong())
+
+            var li = BigInteger.ONE
+
+            for ((j, _) in shares) {
+                if (i == j) continue
+
+                val bigJ = BigInteger.valueOf(j.toLong())
+
+                val sub = bigJ.subtract(bigI)
+                li = li.multiply(sub).abs().modInverse(prime).multiply(bigJ).mod(prime)
+                currSecret = currSecret.multiply(bigJ.subtract(bigI)).mod(prime)
+
+            }
+
+            secret = secret.add(currSecret.multiply(li)).mod(prime)
+        }
+
+        return secret
+        /*
+        var secret = BigInteger.ZERO
+
+        for((i, share) in shares) {
 
             var numerator = BigInteger.ONE
             var denominator = BigInteger.ONE
 
-            for ((shareIndexJ, shareValueJ) in shares) {
-                if (shareIndexI == shareIndexJ) continue
+            for((j, _) in shares) {
+                if (i == j) continue;
 
-                numerator = numerator.multiply(shareValueJ.negate())
-                denominator = denominator.multiply(shareValueI.minus(shareValueJ))
+                numerator = numerator.multiply(BigInteger.valueOf(-j.toLong()))
+                denominator = denominator.multiply(BigInteger.valueOf((j - i).toLong()))
+
             }
-            secret += secret.plus(shareValueI.multiply(numerator.multiply(denominator.modInverse(shareValueI))))
+
+            val here = denominator.modInverse(share)
+            secret = secret.plus(share.times(numerator).times(here))
+
         }
 
         return secret
+
+         */
     }
 
-
 }
+
+
