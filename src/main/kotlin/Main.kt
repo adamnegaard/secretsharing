@@ -25,6 +25,7 @@ fun main(args: Array<String>) {
 
     val task = Cryptography.constructShares(secret, 5, 3)
 
+    val shares = task.getShares()
     val subShares = task.getShares().filterIndexed {index, _ -> index in 1..3 }.toTypedArray()
 
     val reconstructedSecret = Cryptography.reconstructSecret(task.getField(), subShares)

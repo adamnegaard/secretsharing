@@ -13,8 +13,7 @@ object Utils {
     }
 
     fun bigIntegerToMessage(bigInteger: BigInteger): String {
-        var hex = bigIntegerToHex(bigInteger)
-        hex = hex.substring(0, hex.length - 1)
+        val hex = bigIntegerToHex(bigInteger)
 
         return String(HexFormat.of().parseHex(hex))
     }

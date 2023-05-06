@@ -20,7 +20,7 @@ object Cryptography {
         val shares = mutableListOf<Point>()
         for (x in 1 until amountOfShares + 1) {
 
-            val y = poly.calculate(x)
+            val y = poly.calculate(x).mod(prime)
 
             shares.add(Point(x, y))
         }
@@ -29,7 +29,7 @@ object Cryptography {
     }
 
     fun reconstructSecret(prime: BigInteger, shares: Array<Point>): String {
-        val y0 = interpolatePolynomial(shares, 0)
+        val y0 = interpolatePolynomial(shares, 0).mod(prime)
 
         return Utils.bigIntegerToMessage(y0)
     }

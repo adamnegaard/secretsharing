@@ -24,7 +24,7 @@ data class TaskJson(private val field: String, private val shares: Array<String?
 
     fun getShares(): Array<Point> {
         return shares
-            .mapIndexed { shareIndex, shareValue -> shareAsPoint(shareIndex, shareValue)  }
+            .mapIndexed { shareIndex, shareValue -> shareAsPoint(shareIndex + 1, shareValue)  }
             .filterNotNull()
             .toTypedArray()
     }
