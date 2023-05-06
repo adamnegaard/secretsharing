@@ -7,6 +7,7 @@ import model.Point
 import model.Polynomial
 import model.TaskJson
 import java.math.BigInteger
+import java.security.SecureRandom
 
 @OptIn(ExperimentalSerializationApi::class)
 private fun loadTestData(): Array<Point> {
@@ -19,6 +20,23 @@ private fun loadTestData(): Array<Point> {
 }
 
 fun main(args: Array<String>) {
-    val task = Cryptography.constructShares("00b44a", 5, 2)
-    print(Cryptography.reconstructSecret(task.getField(), task.getShares()).toString(16))
+    val secret = "hello there"
+    val secretBit = Utils.messageToBigInteger(secret)
+
+    val task = Cryptography.constructShares(secret, 5, 3)
+
+    println("f(" + 0 + ") = " + Cryptography.interpolatePolynomial(task.getShares().filterIndexed {index, _ -> index in 0..4 }.toTypedArray(), 0))
+    println(secretBit)
+}
+
+fun testPoly() {
+    val secret = BigInteger.valueOf(1234)
+
+    val random = SecureRandom()
+    val coefficients = (1 until 3).map { BigInteger(secret.bitLength(), random) }.toTypedArray()
+
+    val poly = Polynomial(arrayOf(secret).plus(coefficients))
+
+    println(poly.toString())
+    println("f(" + 3 + ") = " + poly.calculate(3))
 }

@@ -9,9 +9,9 @@ data class TaskJson(private val field: String, private val shares: Array<String?
 
     companion object {
         fun ofValues(field: BigInteger, shares: List<Point>): TaskJson {
-            val stringField= Utils.bigIntegerToBitString(field)
+            val stringField= Utils.bigIntegerToHex(field)
             val stringShares: Array<String?> = shares.sortedBy { point -> point.x }
-                .map { point -> Utils.bigIntegerToBitString(point.y) }
+                .map { point -> Utils.bigIntegerToHex(point.y) }
                 .toTypedArray()
 
             return TaskJson(stringField, stringShares)
@@ -19,7 +19,7 @@ data class TaskJson(private val field: String, private val shares: Array<String?
     }
 
     fun getField(): BigInteger {
-        return Utils.bitStringToBigInteger(field)
+        return Utils.hexToBigInteger(field)
     }
 
     fun getShares(): Array<Point> {
@@ -32,7 +32,7 @@ data class TaskJson(private val field: String, private val shares: Array<String?
     private fun shareAsPoint(shareIndex: Int, shareValue: String?): Point? {
         if(shareValue == null) return null
 
-        val bigShare = Utils.bitStringToBigInteger(shareValue)
+        val bigShare = Utils.hexToBigInteger(shareValue)
 
         return Point(shareIndex, bigShare)
     }

@@ -4,63 +4,52 @@ import java.math.BigInteger
 
 data class Polynomial(val coefficients: Array<BigInteger>) {
 
-    private val degree = coefficients.size
+    private val degree = coefficients.size - 1
 
     init {
         if (coefficients.isEmpty()) {
-            throw IllegalArgumentException("Polynomial must have more than one degree")
+            throw IllegalArgumentException("Polynomial must have more than zero degrees")
         }
     }
-/*
-    fun calculate(point: Point): BigInteger {
-        var result = BigInteger.ZERO
-        var currentDegree = degree - 1
 
-        for (i in coefficients.indices) {
+    fun calculate(x: Int): BigInteger {
+        var result = coefficients[0]
+        var currentDegree = 1
+
+        val bigX = BigInteger.valueOf(x.toLong())
+
+        for (i in 1 .. degree) {
 
             var stepResult = coefficients[i]
-            if(currentDegree > 0) {
-                val pow = point.x.pow(currentDegree)
+            if(currentDegree < coefficients.size + 1) {
+                val pow = bigX.pow(currentDegree)
                 stepResult = stepResult.multiply(pow)
             }
 
-            currentDegree--
+            currentDegree++
             result = result.plus(stepResult)
         }
 
         return result
-    }*/
+    }
 
     override fun toString(): String {
-        val sb = StringBuilder()
+        val sb = StringBuilder().append(coefficients[0]).append(" + ")
 
-        var currentDegree = degree - 1
-        for (i in coefficients.indices) {
+        var currentDegree = 1
+        for (i in 1 .. degree) {
 
             sb.append(coefficients[i])
-            if(currentDegree > 0) {
-                sb.append("*x^").append(currentDegree).append(" + ")
+            if(currentDegree < coefficients.size) {
+                sb.append("*x^").append(currentDegree)
+                if(currentDegree < coefficients.size - 1) {
+                    sb.append(" + ")
+                }
             }
 
-            currentDegree--
+            currentDegree++
         }
 
         return sb.toString()
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as Polynomial
-
-        if (!coefficients.contentEquals(other.coefficients)) return false
-        return degree == other.degree
-    }
-
-    override fun hashCode(): Int {
-        var result = coefficients.contentHashCode()
-        result = 31 * result + degree
-        return result
     }
 }

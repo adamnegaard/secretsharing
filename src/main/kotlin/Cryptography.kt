@@ -1,4 +1,5 @@
 import model.Point
+import model.Polynomial
 import model.TaskJson
 import java.security.SecureRandom;
 import java.math.BigInteger
@@ -6,24 +7,18 @@ import java.math.BigInteger
 object Cryptography {
 
     fun constructShares(secret: String, amountOfShares: Int, threshold: Int): TaskJson {
-
-        val numSecret = Utils.bitStringToBigInteger(secret)
+        val numSecret = Utils.messageToBigInteger(secret)
 
         val random = SecureRandom()
         val prime = BigInteger.probablePrime(numSecret.bitLength() + 1, random)
 
         val coefficients = (1 until threshold).map { BigInteger(numSecret.bitLength(), random) }.toTypedArray()
+        val poly = Polynomial(arrayOf(numSecret).plus(coefficients))
 
         val shares = mutableListOf<Point>()
-        for (x in 0 until amountOfShares) {
+        for (x in 1 until amountOfShares + 1) {
 
-            val bigX = BigInteger.valueOf(x.toLong())
-            var y = numSecret
-
-            for (i in 0 until threshold - 1) {
-                val bigI = BigInteger.valueOf(i.toLong())
-                y = y.plus(coefficients[i].times(bigX.modPow(bigI.plus(BigInteger.ONE), prime)))
-            }
+            val y = poly.calculate(x)
 
             shares.add(Point(x, y))
         }
@@ -31,7 +26,7 @@ object Cryptography {
         return TaskJson.ofValues(prime, shares)
     }
 
-    fun reconstructSecret(prime: BigInteger, shares: Array<Point>): BigInteger {
+    fun reconstructSecret(prime: BigInteger, shares: Array<Point>): String {
         var secret = BigInteger.ZERO
 
         for ((i, share) in shares) {
@@ -54,32 +49,25 @@ object Cryptography {
             secret = secret.add(currSecret.multiply(li)).mod(prime)
         }
 
-        return secret
-        /*
-        var secret = BigInteger.ZERO
-
-        for((i, share) in shares) {
-
-            var numerator = BigInteger.ONE
-            var denominator = BigInteger.ONE
-
-            for((j, _) in shares) {
-                if (i == j) continue;
-
-                numerator = numerator.multiply(BigInteger.valueOf(-j.toLong()))
-                denominator = denominator.multiply(BigInteger.valueOf((j - i).toLong()))
-
-            }
-
-            val here = denominator.modInverse(share)
-            secret = secret.plus(share.times(numerator).times(here))
-
-        }
-
-        return secret
-
-         */
+        return Utils.bigIntegerToMessage(secret)
     }
+
+    fun interpolatePolynomial(points: Array<Point>, xValue: Int): BigInteger {
+        var result = BigInteger.ZERO
+        for (i in points.indices) {
+            var term = points[i].y
+            for (j in points.indices) {
+                if (i != j) {
+                    val numerator = BigInteger.valueOf((xValue - points[j].x).toLong())
+                    val denominator = BigInteger.valueOf((points[i].x - points[j].x).toLong())
+                    term = term.multiply(numerator.divide(denominator))
+                }
+            }
+            result = result.plus(term)
+        }
+        return result
+    }
+
 
 }
 
