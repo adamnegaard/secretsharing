@@ -20,13 +20,15 @@ private fun loadTestData(): Array<Point> {
 }
 
 fun main(args: Array<String>) {
-    val secret = "hello there"
-    val secretBit = Utils.messageToBigInteger(secret)
+    val secret = "hello there u mother fucker"
+    val secretBigInt = Utils.messageToBigInteger(secret)
 
     val task = Cryptography.constructShares(secret, 5, 3)
 
-    println("f(" + 0 + ") = " + Cryptography.interpolatePolynomial(task.getShares().filterIndexed {index, _ -> index in 0..4 }.toTypedArray(), 0))
-    println(secretBit)
+    val subShares = task.getShares().filterIndexed {index, _ -> index in 1..3 }.toTypedArray()
+
+    val reconstructedSecret = Cryptography.reconstructSecret(task.getField(), subShares)
+    println("secret was: '$reconstructedSecret'")
 }
 
 fun testPoly() {
@@ -37,6 +39,13 @@ fun testPoly() {
 
     val poly = Polynomial(arrayOf(secret).plus(coefficients))
 
+    val points = arrayOf(poly.calculate(1), poly.calculate(2), poly.calculate(3)).mapIndexed {i, b -> Point(i+1, b)}.toTypedArray()
+
     println(poly.toString())
-    println("f(" + 3 + ") = " + poly.calculate(3))
+    println("f(" + 1 + ") = " + points[0].y)
+    println("f(" + 2 + ") = " + points[1].y)
+    println("f(" + 3 + ") = " + points[2].y)
+    println()
+    println("f(" + 0 + ") = " + poly.calculate(0))
+    println("f(" + 0 + ") = " + Cryptography.interpolatePolynomial(points, 0))
 }

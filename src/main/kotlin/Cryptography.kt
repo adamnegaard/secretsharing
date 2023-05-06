@@ -1,8 +1,10 @@
+
 import model.Point
 import model.Polynomial
 import model.TaskJson
-import java.security.SecureRandom;
+import java.math.BigDecimal
 import java.math.BigInteger
+import java.security.SecureRandom
 
 object Cryptography {
 
@@ -27,44 +29,33 @@ object Cryptography {
     }
 
     fun reconstructSecret(prime: BigInteger, shares: Array<Point>): String {
-        var secret = BigInteger.ZERO
+        val y0 = interpolatePolynomial(shares, 0)
 
-        for ((i, share) in shares) {
-            var currSecret = share
-            val bigI = BigInteger.valueOf(i.toLong())
-
-            var li = BigInteger.ONE
-
-            for ((j, _) in shares) {
-                if (i == j) continue
-
-                val bigJ = BigInteger.valueOf(j.toLong())
-
-                val sub = bigJ.subtract(bigI)
-                li = li.multiply(sub).abs().modInverse(prime).multiply(bigJ).mod(prime)
-                currSecret = currSecret.multiply(bigJ.subtract(bigI)).mod(prime)
-
-            }
-
-            secret = secret.add(currSecret.multiply(li)).mod(prime)
-        }
-
-        return Utils.bigIntegerToMessage(secret)
+        return Utils.bigIntegerToMessage(y0)
     }
 
-    fun interpolatePolynomial(points: Array<Point>, xValue: Int): BigInteger {
+    fun interpolatePolynomial(points: Array<Point>, x: Int): BigInteger {
         var result = BigInteger.ZERO
-        for (i in points.indices) {
-            var term = points[i].y
-            for (j in points.indices) {
-                if (i != j) {
-                    val numerator = BigInteger.valueOf((xValue - points[j].x).toLong())
-                    val denominator = BigInteger.valueOf((points[i].x - points[j].x).toLong())
-                    term = term.multiply(numerator.divide(denominator))
+
+        for (pointI in points) {
+
+            var term = pointI.y.toBigDecimal()
+
+            for (pointJ in points) {
+
+                if (pointI.x != pointJ.x) {
+
+                    val numerator = (x - pointJ.x).toDouble()
+                    val denominator = (pointI.x - pointJ.x).toDouble()
+
+                    val div = BigDecimal.valueOf(numerator  / denominator)
+                    term = term.multiply(div)
                 }
             }
-            result = result.plus(term)
+
+            result = result.plus(term.toBigInteger())
         }
+
         return result
     }
 

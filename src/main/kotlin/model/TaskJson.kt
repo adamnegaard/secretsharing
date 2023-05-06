@@ -9,7 +9,7 @@ data class TaskJson(private val field: String, private val shares: Array<String?
 
     companion object {
         fun ofValues(field: BigInteger, shares: List<Point>): TaskJson {
-            val stringField= Utils.bigIntegerToHex(field)
+            val stringField = Utils.bigIntegerToHex(field)
             val stringShares: Array<String?> = shares.sortedBy { point -> point.x }
                 .map { point -> Utils.bigIntegerToHex(point.y) }
                 .toTypedArray()
