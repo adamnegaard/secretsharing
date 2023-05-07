@@ -1,4 +1,5 @@
 import java.math.BigInteger
+import java.nio.charset.StandardCharsets
 import java.util.*
 
 
@@ -7,7 +8,7 @@ object Utils {
     private val base = 16
 
     fun messageToBigInteger(message: String): BigInteger {
-        val hex = HexFormat.of().formatHex(message.toByteArray())
+        val hex = HexFormat.of().formatHex(message.toByteArray(), )
 
         return hexToBigInteger(hex)
     }
@@ -25,6 +26,8 @@ object Utils {
     }
 
     fun bigIntegerToHex(bigInteger: BigInteger): String {
-        return bigInteger.toString(base)
+        val string = bigInteger.toString(base)
+
+        return String(string.toByteArray(StandardCharsets.UTF_8), StandardCharsets.UTF_8)
     }
 }
