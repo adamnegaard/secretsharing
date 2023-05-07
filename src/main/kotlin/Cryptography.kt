@@ -7,30 +7,45 @@ import java.security.SecureRandom
 
 object Cryptography {
 
+    /**
+     * Construct shares from a plaintext message
+     */
     fun constructShares(secret: String, amountOfShares: Int, threshold: Int): SecretShares {
+        // message represented as bitstring
         val numSecret = Utils.messageToBigInteger(secret)
 
+        // choose a prime sized depending on the size of the secret
         val random = SecureRandom()
         val prime = BigInteger.probablePrime(numSecret.bitLength() + 1, random)
 
+        // choose threshold - 1 coefficients and create a polynomial
         val coefficients = (1 until threshold).map { BigInteger(numSecret.bitLength(), random) }.toTypedArray()
         val poly = Polynomial(arrayOf(numSecret).plus(coefficients))
 
+        // create shares 1..amountOfShares
         val shares = mutableListOf<Point>()
         for (x in 1 until amountOfShares + 1) {
 
+            // calculate y as x given to the polynomial function
             val y = poly.calculate(x).mod(prime)
 
             shares.add(Point(x, y))
         }
 
+        // return the prime (field) and the shares
         return SecretShares.ofValues(prime, shares)
     }
 
+    /**
+     * Reconstruct a BigInteger message from a prime and shares
+     */
     fun reconstructSecretToBigInt(prime: BigInteger, shares: Array<Point>): BigInteger {
         return lagrangeInterpolate(prime, shares, 0)
     }
 
+    /**
+     * Reconstruct a String message from a prime and shares
+     */
     fun reconstructSecret(prime: BigInteger, shares: Array<Point>): String {
         val y0 = reconstructSecretToBigInt(prime, shares)
 
@@ -83,7 +98,6 @@ object Cryptography {
         }
 
         return divMod(numerator, denominator, prime).plus(prime).mod(prime)
-
     }
 }
 
