@@ -5,16 +5,16 @@ import kotlinx.serialization.Serializable
 import java.math.BigInteger
 
 @Serializable
-data class TaskJson(private val field: String, private val shares: Array<String?>) {
+data class SecretShares(private val field: String, private val shares: Array<String?>) {
 
     companion object {
-        fun ofValues(field: BigInteger, shares: List<Point>): TaskJson {
+        fun ofValues(field: BigInteger, shares: List<Point>): SecretShares {
             val stringField = Utils.bigIntegerToHex(field)
             val stringShares: Array<String?> = shares.sortedBy { point -> point.x }
                 .map { point -> Utils.bigIntegerToHex(point.y) }
                 .toTypedArray()
 
-            return TaskJson(stringField, stringShares)
+            return SecretShares(stringField, stringShares)
         }
     }
 

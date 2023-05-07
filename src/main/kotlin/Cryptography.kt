@@ -1,15 +1,13 @@
 
 import model.Point
 import model.Polynomial
-import model.TaskJson
-import java.math.BigDecimal
+import model.SecretShares
 import java.math.BigInteger
-import java.math.RoundingMode
 import java.security.SecureRandom
 
 object Cryptography {
 
-    fun constructShares(secret: String, amountOfShares: Int, threshold: Int): TaskJson {
+    fun constructShares(secret: String, amountOfShares: Int, threshold: Int): SecretShares {
         val numSecret = Utils.messageToBigInteger(secret)
 
         val random = SecureRandom()
@@ -26,48 +24,67 @@ object Cryptography {
             shares.add(Point(x, y))
         }
 
-        return TaskJson.ofValues(prime, shares)
+        return SecretShares.ofValues(prime, shares)
     }
 
-    fun reconstructSecretToBigInt(prime: BigInteger, n: Int, shares: Array<Point>): BigInteger {
-        val y0 = interpolatePolynomial(shares, n).mod(prime)
-
-        return y0
+    fun reconstructSecretToBigInt(prime: BigInteger, shares: Array<Point>, n: Int): BigInteger {
+        return lagrangeInterpolate(prime, shares, n)
     }
 
     fun reconstructSecret(prime: BigInteger, shares: Array<Point>): String {
-        val y0 = interpolatePolynomial(shares, 0).mod(prime)
+        val y0 = reconstructSecretToBigInt(prime, shares, 0)
 
         return Utils.bigIntegerToMessage(y0)
     }
 
-    fun interpolatePolynomial(points: Array<Point>, x: Int): BigInteger {
-        var result = BigInteger.ZERO
+    /**
+     * Inspired by <a href="https://en.wikipedia.org/wiki/Shamir%27s_secret_sharing">wikipedia algorithm</a>
+     */
+    private fun lagrangeInterpolate(prime: BigInteger, points: Array<Point>, x: Int): BigInteger {
+        fun divMod(num: BigInteger, den: BigInteger, m: BigInteger): BigInteger {
+            val inv = den.modInverse(m)
 
-        for (pointI in points) {
-
-            var term = pointI.y.toBigDecimal()
-
-            for (pointJ in points) {
-
-                if (pointI.x != pointJ.x) {
-
-                    val numerator = (x - pointJ.x).toDouble()
-                    val denominator = (pointI.x - pointJ.x).toDouble()
-
-                    val div = BigDecimal.valueOf(numerator / denominator)
-                    term = term.multiply(div)
-                }
-            }
-
-            val bigIntTerm = term.setScale(0, RoundingMode.HALF_EVEN).toBigInteger()
-            result = result.plus(bigIntTerm)
+            return num.multiply(inv)
         }
 
-        return result
+        fun product(arr: List<BigInteger>): BigInteger {
+            var acc = BigInteger.ONE
+
+            for (bigInteger in arr) {
+                acc = acc.multiply(bigInteger)
+            }
+
+            return acc
+        }
+
+        val k = points.size
+        val bigX = BigInteger.valueOf(x.toLong())
+
+        val numerators = arrayListOf<BigInteger>()
+        val denominators = arrayListOf<BigInteger>()
+
+        val xs = points.map { p -> BigInteger.valueOf(p.x.toLong()) }
+
+        for (i in 0 until k) {
+            val others = xs.toMutableList()
+            val curr = others.removeAt(i)
+
+            numerators.add(product(others.map { o -> bigX.subtract(o) }))
+            denominators.add(product(others.map { o -> curr.subtract(o) }))
+        }
+
+        val denominator = product(denominators)
+
+        var numerator = BigInteger.ZERO
+        for (i in 0 until k) {
+            val mul = numerators[i].multiply(denominator).multiply(points[i].y)
+
+            numerator = numerator.plus(divMod(mul, denominators[i], prime))
+        }
+
+        return divMod(numerator, denominator, prime).plus(prime).mod(prime)
+
     }
-
-
 }
 
 

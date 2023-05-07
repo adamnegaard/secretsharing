@@ -2,30 +2,30 @@
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
-import model.TaskJson
+import model.SecretShares
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 internal class CryptographyTest {
 
     @OptIn(ExperimentalSerializationApi::class)
-    private fun loadTestData(): TaskJson {
+    private fun loadTestData(): SecretShares {
         val fileName = "secrets.json"
         val classLoader = CryptographyTest::class.java.classLoader
         val resourceStream = classLoader.getResourceAsStream(fileName)
             ?: throw IllegalArgumentException("No filed named $fileName")
 
-        return Json.decodeFromStream<TaskJson>(resourceStream)
+        return Json.decodeFromStream<SecretShares>(resourceStream)
     }
 
     @Test
-    fun test_data_reconstructs_message() {
+    fun provided_shares_and_field_reconstructs_message() {
         // ARRANGE
-        val taskJson = loadTestData()
-        val shares = taskJson.getShares()
+        val secretShares = loadTestData()
+        val shares = secretShares.getShares()
 
         // ACT
-        val secret = Cryptography.reconstructSecret(taskJson.getField(), shares)
+        val secret = Cryptography.reconstructSecret(secretShares.getField(), shares)
 
         // ASSERT
         println(secret)
@@ -33,20 +33,35 @@ internal class CryptographyTest {
     }
 
     @Test
-    fun try_all_combinations_of_threshold() {
+    fun all_shares_constructs_correct_message() {
         // ARRANGE
-        val message = "blaaaa"
+        val message = "Very very secret message"
+
+        val secretShares = Cryptography.constructShares(message, 5, 3)
+
+        // ACT
+        val reconstructedMessage = Cryptography.reconstructSecret(secretShares.getField(), secretShares.getShares())
+
+        // ASSERT
+        assertEquals(message, reconstructedMessage)
+
+    }
+
+    @Test
+    fun all_combinations_of_treshold_shares_constructs_message() {
+        // ARRANGE
+        val message = "Not so secret message"
         val amountOfShares = 5
         val threshold = 3
 
-        val taskJson = Cryptography.constructShares(message, amountOfShares, threshold)
+        val secretShares = Cryptography.constructShares(message, amountOfShares, threshold)
 
         // ACT & ASSERT
-        tryAllCombinationsOfThreshold3(message, amountOfShares, taskJson)
+        tryAllCombinationsOfThreshold3(message, amountOfShares, secretShares)
     }
 
-    private fun tryAllCombinationsOfThreshold3(message: String, amountOfShares: Int, taskJson: TaskJson) {
-        val shares = taskJson.getShares()
+    private fun tryAllCombinationsOfThreshold3(message: String, amountOfShares: Int, secretShares: SecretShares) {
+        val shares = secretShares.getShares()
 
         for (i in 0 until amountOfShares) {
             val shareI = shares[i]
@@ -64,7 +79,7 @@ internal class CryptographyTest {
 
                     val subShares = arrayOf(shareI, shareJ, shareK)
 
-                    val reconstructedMessage = Cryptography.reconstructSecret(taskJson.getField(), subShares)
+                    val reconstructedMessage = Cryptography.reconstructSecret(secretShares.getField(), subShares)
                     assertEquals(message, reconstructedMessage)
                 }
             }
