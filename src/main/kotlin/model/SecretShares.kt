@@ -5,16 +5,19 @@ import kotlinx.serialization.Serializable
 import java.math.BigInteger
 
 @Serializable
-data class SecretShares(private val field: String, private val shares: Array<String?>) {
+data class SharePoint(val x: Int, val y: String?)
+
+@Serializable
+data class SecretShares(private val field: String, private val shares: Array<SharePoint>) {
 
     companion object {
         fun ofValues(field: BigInteger, shares: List<Point>): SecretShares {
             val stringField = Utils.bigIntegerToHex(field)
-            val stringShares: Array<String?> = shares.sortedBy { point -> point.x }
-                .map { point -> Utils.bigIntegerToHex(point.y) }
+            val sharePoints: Array<SharePoint> = shares.sortedBy { point -> point.x }
+                .map { point -> SharePoint(point.x, Utils.bigIntegerToHex(point.y)) }
                 .toTypedArray()
 
-            return SecretShares(stringField, stringShares)
+            return SecretShares(stringField, sharePoints)
         }
     }
 
@@ -23,9 +26,7 @@ data class SecretShares(private val field: String, private val shares: Array<Str
     }
 
     fun getShares(): Array<Point> {
-        return shares
-            .mapIndexed { shareIndex, shareValue -> shareAsPoint(shareIndex + 1, shareValue)  }
-            .filterNotNull()
+        return shares.mapNotNull { share -> shareAsPoint(share.x, share.y) }
             .toTypedArray()
     }
 
