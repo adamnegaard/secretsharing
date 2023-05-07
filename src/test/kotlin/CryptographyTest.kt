@@ -38,13 +38,14 @@ internal class CryptographyTest {
         val message = "blaaaa"
         val amountOfShares = 5
         val threshold = 3
+
         val taskJson = Cryptography.constructShares(message, amountOfShares, threshold)
 
         // ACT & ASSERT
-        tryAllCombinations(message, amountOfShares, threshold, taskJson)
+        tryAllCombinationsOfThreshold3(message, amountOfShares, taskJson)
     }
 
-    private fun tryAllCombinations(message: String, amountOfShares: Int, threshold: Int, taskJson: TaskJson) {
+    private fun tryAllCombinationsOfThreshold3(message: String, amountOfShares: Int, taskJson: TaskJson) {
         val shares = taskJson.getShares()
 
         for (i in 0 until amountOfShares) {

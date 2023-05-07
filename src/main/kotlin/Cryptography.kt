@@ -4,6 +4,7 @@ import model.Polynomial
 import model.TaskJson
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.math.RoundingMode
 import java.security.SecureRandom
 
 object Cryptography {
@@ -28,6 +29,12 @@ object Cryptography {
         return TaskJson.ofValues(prime, shares)
     }
 
+    fun reconstructSecretToBigInt(prime: BigInteger, n: Int, shares: Array<Point>): BigInteger {
+        val y0 = interpolatePolynomial(shares, n).mod(prime)
+
+        return y0
+    }
+
     fun reconstructSecret(prime: BigInteger, shares: Array<Point>): String {
         val y0 = interpolatePolynomial(shares, 0).mod(prime)
 
@@ -48,12 +55,13 @@ object Cryptography {
                     val numerator = (x - pointJ.x).toDouble()
                     val denominator = (pointI.x - pointJ.x).toDouble()
 
-                    val div = BigDecimal.valueOf(numerator  / denominator)
+                    val div = BigDecimal.valueOf(numerator / denominator)
                     term = term.multiply(div)
                 }
             }
 
-            result = result.plus(term.toBigInteger())
+            val bigIntTerm = term.setScale(0, RoundingMode.HALF_EVEN).toBigInteger()
+            result = result.plus(bigIntTerm)
         }
 
         return result

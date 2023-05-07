@@ -17,13 +17,13 @@ private fun loadTestData(): Array<Point> {
 }
 
 fun main(args: Array<String>) {
-    val secret = "hello there u mother fucker"
+    val secret = "hello"
     val secretBigInt = Utils.messageToBigInteger(secret)
 
     val task = Cryptography.constructShares(secret, 5, 3)
 
     val shares = task.getShares()
-    val subShares = task.getShares().filterIndexed {index, _ -> index in 1..3 }.toTypedArray()
+    val subShares = arrayOf(shares[0], shares[1], shares[3])
 
     val reconstructedSecret = Cryptography.reconstructSecret(task.getField(), subShares)
     println("secret was: '$reconstructedSecret'")
