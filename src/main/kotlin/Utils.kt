@@ -1,5 +1,5 @@
+
 import java.math.BigInteger
-import java.nio.charset.StandardCharsets
 import java.util.*
 
 
@@ -28,6 +28,6 @@ object Utils {
     fun bigIntegerToHex(bigInteger: BigInteger): String {
         val string = bigInteger.toString(base)
 
-        return String(string.toByteArray(StandardCharsets.UTF_8), StandardCharsets.UTF_8)
+        return String(string.toByteArray())
     }
 }

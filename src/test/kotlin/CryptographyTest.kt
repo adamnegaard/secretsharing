@@ -76,8 +76,6 @@ internal class CryptographyTest {
 
                     val shareK = shares[k]
 
-                    println("Verifying with i = $i, j = $j and k = $k")
-
                     val subShares = arrayOf(shareI, shareJ, shareK)
 
                     val reconstructedMessage = Cryptography.reconstructSecret(secretShares.getField(), subShares)
