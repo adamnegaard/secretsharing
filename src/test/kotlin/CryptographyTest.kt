@@ -25,7 +25,7 @@ internal class CryptographyTest {
         val shares = secretShares.getShares()
 
         // ACT
-        val secret = Cryptography.reconstructSecret(secretShares.getField(), shares)
+        val secret = Cryptography.reconstructSecretToBigInt(secretShares.getField(), shares)
 
         // ASSERT
         println(secret)

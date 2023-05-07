@@ -27,12 +27,12 @@ object Cryptography {
         return SecretShares.ofValues(prime, shares)
     }
 
-    fun reconstructSecretToBigInt(prime: BigInteger, shares: Array<Point>, n: Int): BigInteger {
-        return lagrangeInterpolate(prime, shares, n)
+    fun reconstructSecretToBigInt(prime: BigInteger, shares: Array<Point>): BigInteger {
+        return lagrangeInterpolate(prime, shares, 0)
     }
 
     fun reconstructSecret(prime: BigInteger, shares: Array<Point>): String {
-        val y0 = reconstructSecretToBigInt(prime, shares, 0)
+        val y0 = reconstructSecretToBigInt(prime, shares)
 
         return Utils.bigIntegerToMessage(y0)
     }
